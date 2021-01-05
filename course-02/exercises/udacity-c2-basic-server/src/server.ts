@@ -20,6 +20,16 @@ import { Car, cars as cars_list } from './cars';
     res.status(200).send("Welcome to the Cloud!");
   } );
 
+  // Get all cars
+  app.get( "/cars", ( req: Request, res: Response ) => {
+    const { make } = req.query
+    let carsList = cars
+    if (make){
+      carsList = carsList.filter(car => car.make === make)
+    }
+    res.status(200).send(carsList);
+  } );
+
   // Get a greeting to a specific person 
   // to demonstrate routing parameters
   // > try it {{host}}/persons/:the_name
@@ -34,6 +44,29 @@ import { Car, cars as cars_list } from './cars';
 
       return res.status(200)
                 .send(`Welcome to the Cloud, ${name}!`);
+  } );
+
+  // Get a specifc car
+  // to demonstrate routing parameters
+  // > try it {{host}}/cars/:the_name
+  app.get( "/cars/:id", 
+    ( req: Request, res: Response ) => {
+      let { id } = req.params;
+
+      if ( !id ) {
+        return res.status(400)
+                  .send(`car ID is required`);
+      }
+
+      const car = cars.find(car => car.id === parseInt(id))
+
+      if ( !car) {
+        return res.status(404)
+                  .send(`car not found`);
+      }
+
+      return res.status(200)
+                .send(car);
   } );
 
   // Get a greeting to a specific person to demonstrate req.query
@@ -66,6 +99,35 @@ import { Car, cars as cars_list } from './cars';
 
       return res.status(200)
                 .send(`Welcome to the Cloud, ${name}!`);
+  } );
+
+  // Post a car 
+  // to demonstrate req.body
+  // > try it by posting { make: 'new car', type: 'theBest', model: 'allpower', cost: 10 } as 
+  // an application/json body to {{host}}/persons
+  app.post( "/cars", 
+    async ( req: Request, res: Response ) => {
+
+      const { make, type, model, cost } = req.body;
+
+      try {
+        [make, type, model, cost].forEach(function(field) {
+          if (!field) throw new Error(`missing fields`);
+        });
+      } catch (e) {
+        return res.status(400).send(e.message);
+      }
+
+      let nextID = cars.reduce((prev, curr) => { 
+        if (curr.id > prev) {
+        return curr.id
+      } else {
+        return prev
+      }}, 0)
+      const newCar = {make, type, model, cost, id: ++nextID}
+      cars.push(newCar)
+      return res.status(201)
+                .send(newCar);
   } );
 
   // @TODO Add an endpoint to GET a list of cars
